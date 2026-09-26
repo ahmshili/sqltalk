@@ -1,0 +1,41 @@
+SQLTalk — Restricted Evaluation License
+Copyright (c) 2026 Ahmed Shili (https://github.com/ahmshili, https://ashili.pages.dev)
+
+This software and associated documentation files (the "Software") are made
+available for the following purposes only:
+
+  1. Personal evaluation and testing of the Software, including running it
+     locally against your own database and language-model credentials.
+  2. Code review, learning from, and discussing the Software's source code.
+  3. Preparing and submitting a pull request back to this Software's own
+     repository (i.e. contributing improvements upstream to this project).
+
+The following are expressly NOT permitted without prior written permission
+from the copyright holder:
+
+  a. Forking, redistributing, publishing, or otherwise making available
+     copies or substantial portions of the Software, whether modified or
+     unmodified, under this or any other name.
+  b. Any commercial use, including but not limited to selling, sublicensing,
+     hosting as a paid service, or incorporating the Software (in whole or
+     in part) into a commercial product or offering.
+  c. Using the Software, or any derivative of it, for any purpose other
+     than those listed above.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+──────────────────────────────────────────────────────────────────────────
+Upstream attribution
+
+SQLTalk is a from-scratch architectural refactor inspired by the publicly
+available open-source project `trinhvanminh/SQL_Agent`. No code, assets, or
+license text from that repository is redistributed here; only the general
+concept (a LangChain-based natural-language-to-SQL Streamlit assistant) is
+shared. No LICENSE file was found in the upstream repository at the time of
+this writing. If you are the author of that project and believe this notice
+is insufficient, please reach out via the contact links above.
