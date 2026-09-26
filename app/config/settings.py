@@ -84,6 +84,7 @@ class Settings:
     max_iterations: int
     max_rows: int
     read_only: bool
+    db_schemas: Optional[List[str]] = None
     blocked_keywords: List[str] = field(
         default_factory=lambda: list(DEFAULT_BLOCKED_KEYWORDS)
     )
@@ -130,4 +131,12 @@ def load_settings(
         max_iterations=max_iterations or _get_int("AGENT_MAX_ITERATIONS", DEFAULT_MAX_ITERATIONS),
         max_rows=max_rows or _get_int("AGENT_MAX_ROWS", DEFAULT_MAX_ROWS),
         read_only=read_only if read_only is not None else _get_bool("READ_ONLY_MODE", DEFAULT_READ_ONLY),
+        db_schemas=_get_schemas(),
     )
+
+
+def _get_schemas() -> Optional[List[str]]:
+    raw = os.getenv("DB_SCHEMAS")
+    if not raw or not raw.strip():
+        return None
+    return [s.strip() for s in raw.split(",") if s.strip()]

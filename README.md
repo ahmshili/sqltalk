@@ -112,6 +112,7 @@ Copy `.env.example` to `.env` and fill it in. Key variables:
 | `AGENT_MAX_ITERATIONS`    |          | `6`                                          | Reasoning steps before the agent gives up                 |
 | `AGENT_MAX_ROWS`          |          | `200`                                        | Row cap enforced on every query                            |
 | `READ_ONLY_MODE`          |          | `true`                                       | Blocks DROP/DELETE/TRUNCATE/ALTER/INSERT/UPDATE/etc.       |
+| `DB_SCHEMAS`              |          | *(auto-discovered)*                          | Comma-separated schema allowlist, e.g. `Production,Sales`  |
 
 ### Building `DB_CONNECTION_STRING`
 
@@ -155,6 +156,27 @@ Then open the printed local URL (typically `http://localhost:8501`).
 - Which sales territory generated the most revenue?
 - Compare sales between 2012 and 2013.
 - Which customers have never placed an order?
+
+## Schema visibility
+
+SQL Server scopes table listings to a single schema by default, and that
+default is `dbo` — but real databases (AdventureWorks included) keep their
+actual business tables in `Production`, `Sales`, `Person`, `HumanResources`,
+`Purchasing`, and so on. SQLTalk auto-discovers every non-system schema in
+the connected database on startup, so the agent sees the real tables out of
+the box. If you want to scope it down (e.g. for a large multi-tenant
+database), set `DB_SCHEMAS=Production,Sales` in `.env`.
+
+## Choosing an OpenRouter model
+
+Pin `OPENROUTER_MODEL` to a specific model slug, not to OpenRouter's
+`openrouter/free` auto-router. The auto-router can serve a *different*
+underlying model on every single call within one agent run, and this
+project's agent relies on the model consistently reproducing one exact
+`Thought / Action / Action Input` text format turn after turn — switching
+models mid-conversation reliably breaks that, and has also been observed to
+produce answers that don't match the actual query results. Pick one model
+and stick with it for a session.
 
 ## Query transparency
 

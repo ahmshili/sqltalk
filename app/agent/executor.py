@@ -31,6 +31,7 @@ def create_sql_agent_executor(
     max_iterations: int = 6,
     max_rows: int = 200,
     read_only: bool = True,
+    db_schemas: Optional[list] = None,
     on_query: Optional[Callable[[str, str, bool], None]] = None,
     **kwargs,
 ) -> AgentExecutor:
@@ -42,11 +43,14 @@ def create_sql_agent_executor(
         max_iterations: Cap on agent reasoning steps before it gives up.
         max_rows: Row cap enforced on executed SELECT statements.
         read_only: If True (default), destructive statements are rejected.
+        db_schemas: Explicit schemas to reflect. Omit to auto-discover every
+            non-system schema (recommended for databases like AdventureWorks
+            whose business tables live outside `dbo`).
         on_query: Optional callback invoked as (sql, result, ok) every time
             the agent executes a query — used to feed the UI's "Generated
             SQL" / "Query Results" panels.
     """
-    db = create_database(connection_string)
+    db = create_database(connection_string, schemas=db_schemas)
 
     toolkit = SQLTalkToolkit(
         db=db,

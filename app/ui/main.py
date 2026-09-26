@@ -54,7 +54,8 @@ def render_footer(settings) -> None:
 
 @st.cache_resource(show_spinner=False)
 def _build_agent(connection_string: str, api_key: str, model: str, base_url: str,
-                  temperature: float, max_iterations: int, max_rows: int, read_only: bool):
+                  temperature: float, max_iterations: int, max_rows: int, read_only: bool,
+                  db_schemas: tuple | None):
     """Build (and cache) the agent executor for a given configuration.
 
     Cached on the full set of parameters that affect behavior, so changing
@@ -77,6 +78,7 @@ def _build_agent(connection_string: str, api_key: str, model: str, base_url: str
         max_iterations=max_iterations,
         max_rows=max_rows,
         read_only=read_only,
+        db_schemas=list(db_schemas) if db_schemas else None,
     )
 
 
@@ -112,6 +114,7 @@ def main() -> None:
             settings.max_iterations,
             settings.max_rows,
             settings.read_only,
+            tuple(settings.db_schemas) if settings.db_schemas else None,
         )
     except DatabaseConnectionError as exc:
         st.error(exc.message)

@@ -1,17 +1,20 @@
 """Database connection layer.
 
-Wraps LangChain's `SQLDatabase` utility with connection-testing and
-error-normalizing helpers so the UI never has to deal with raw
-SQLAlchemy/pyodbc exceptions directly.
+Wraps LangChain's `SQLDatabase` utility (via `MultiSchemaSQLDatabase`) with
+connection-testing and error-normalizing helpers so the UI never has to deal
+with raw SQLAlchemy/pyodbc exceptions directly.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlparse
 
 from langchain_community.utilities import SQLDatabase
+from sqlalchemy import create_engine
+
+from app.database.multi_schema import MultiSchemaSQLDatabase, discover_business_schemas
 
 
 class DatabaseConnectionError(Exception):
@@ -53,12 +56,23 @@ def describe_connection(connection_string: str) -> ConnectionInfo:
         return ConnectionInfo(server="unknown", database="unknown", driver="unknown")
 
 
-def create_database(connection_string: str) -> SQLDatabase:
-    """Create a `SQLDatabase` instance, translating connection failures into
-    a `DatabaseConnectionError` with a clear, non-technical message.
+def create_database(connection_string: str, schemas: Optional[List[str]] = None) -> SQLDatabase:
+    """Create a `SQLDatabase` instance reflecting every relevant schema
+    (auto-discovered by default), translating connection failures into a
+    `DatabaseConnectionError` with a clear, non-technical message.
+
+    Args:
+        connection_string: SQLAlchemy connection string.
+        schemas: Explicit list of schemas to reflect. If omitted, every
+            schema in the database is used except SQL Server's built-in
+            system/role schemas (see app.database.multi_schema).
     """
     try:
-        return SQLDatabase.from_uri(connection_string)
+        engine = create_engine(connection_string)
+        resolved_schemas = schemas or discover_business_schemas(engine)
+        if not resolved_schemas:
+            resolved_schemas = ["dbo"]
+        return MultiSchemaSQLDatabase(engine, schemas=resolved_schemas)
     except Exception as exc:  # noqa: BLE001 - we deliberately normalize all errors here
         raise DatabaseConnectionError(
             "Could not connect to SQL Server. Check your connection string, "

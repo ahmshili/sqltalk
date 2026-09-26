@@ -15,6 +15,7 @@ venv/
 .ruff_cache/
 htmlcov/
 .coverage
+.freebuff
 
 # Streamlit
 .streamlit/secrets.toml
@@ -28,4 +29,3 @@ htmlcov/
 *.bak
 *.sqlite
 *.db
-*.zip
