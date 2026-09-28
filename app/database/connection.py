@@ -2,7 +2,7 @@
 
 Wraps LangChain's `SQLDatabase` utility (via `MultiSchemaSQLDatabase`) with
 connection-testing and error-normalizing helpers so the UI never has to deal
-with raw SQLAlchemy/pyodbc exceptions directly.
+with raw SQLAlchemy/pyodbc/psycopg2 exceptions directly.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from langchain_community.utilities import SQLDatabase
 from sqlalchemy import create_engine
 
 from app.database.multi_schema import MultiSchemaSQLDatabase, discover_business_schemas
+from app.database.uri import MSSQL_DIALECT, POSTGRES_DIALECT, dialect_from_connection_string
 
 
 class DatabaseConnectionError(Exception):
@@ -46,17 +47,29 @@ def describe_connection(connection_string: str) -> ConnectionInfo:
         server = parsed.hostname or "unknown"
         database = (parsed.path or "").lstrip("/") or "unknown"
         query = parsed.query or ""
+        dialect = dialect_from_connection_string(connection_string)
         driver = "unknown"
-        for part in query.split("&"):
-            if part.lower().startswith("driver="):
-                driver = part.split("=", 1)[1].replace("+", " ")
-                break
+        if dialect == POSTGRES_DIALECT:
+            driver = "psycopg2 (PostgreSQL)"
+            for part in query.split("&"):
+                if part.lower().startswith("sslmode="):
+                    driver += f" — sslmode={part.split('=', 1)[1]}"
+                    break
+        else:
+            for part in query.split("&"):
+                if part.lower().startswith("driver="):
+                    driver = part.split("=", 1)[1].replace("+", " ")
+                    break
         return ConnectionInfo(server=server, database=database, driver=driver)
     except Exception:
         return ConnectionInfo(server="unknown", database="unknown", driver="unknown")
 
 
-def create_database(connection_string: str, schemas: Optional[List[str]] = None) -> SQLDatabase:
+def create_database(
+    connection_string: str,
+    schemas: Optional[List[str]] = None,
+    dialect: Optional[str] = None,
+) -> SQLDatabase:
     """Create a `SQLDatabase` instance reflecting every relevant schema
     (auto-discovered by default), translating connection failures into a
     `DatabaseConnectionError` with a clear, non-technical message.
@@ -64,19 +77,23 @@ def create_database(connection_string: str, schemas: Optional[List[str]] = None)
     Args:
         connection_string: SQLAlchemy connection string.
         schemas: Explicit list of schemas to reflect. If omitted, every
-            schema in the database is used except SQL Server's built-in
-            system/role schemas (see app.database.multi_schema).
+            schema in the database is used except the dialect's built-in
+            system schemas (see app.database.multi_schema).
+        dialect: `mssql` or `postgres`. Detected from the connection string
+            when omitted.
     """
+    resolved_dialect = dialect or dialect_from_connection_string(connection_string)
+    server_kind = "PostgreSQL" if resolved_dialect == POSTGRES_DIALECT else "SQL Server"
     try:
         engine = create_engine(connection_string)
-        resolved_schemas = schemas or discover_business_schemas(engine)
+        resolved_schemas = schemas or discover_business_schemas(engine, resolved_dialect)
         if not resolved_schemas:
             resolved_schemas = ["dbo"]
         return MultiSchemaSQLDatabase(engine, schemas=resolved_schemas)
     except Exception as exc:  # noqa: BLE001 - we deliberately normalize all errors here
         raise DatabaseConnectionError(
-            "Could not connect to SQL Server. Check your connection string, "
-            "credentials, and that the server is reachable.",
+            f"Could not connect to {server_kind}. Check your connection "
+            "string, credentials, and that the server is reachable.",
             detail=str(exc),
         ) from exc
 
@@ -87,7 +104,7 @@ def test_connection(connection_string: str) -> ConnectionInfo:
     """
     db = create_database(connection_string)
     try:
-        db.run("SELECT 1")
+        db.run("SELECT 1")  # valid on both MSSQL and PostgreSQL
     except Exception as exc:  # noqa: BLE001
         raise DatabaseConnectionError(
             "Connected, but a test query failed. The database user may lack "

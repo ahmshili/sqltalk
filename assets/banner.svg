@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-label="SQLTalk — natural language in, real SQL out">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="0.55" stop-color="#0f1a2e"/>
+      <stop offset="1" stop-color="#12233a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#4ade80"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2e8f0"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="320" rx="18" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="1197" height="317" rx="16.5" fill="none" stroke="#22c55e" stroke-opacity="0.25" stroke-width="3"/>
+  <ellipse cx="230" cy="160" rx="260" ry="160" fill="url(#glow)"/>
+
+  <!-- ambient schema/table motifs -->
+  <g stroke="#334155" stroke-width="2" fill="none" opacity="0.55">
+    <path d="M760 60 h150 a8 8 0 0 1 8 8 v44 h-158 z"/>
+    <path d="M760 112 v46 a8 8 0 0 0 8 8 h142"/>
+    <line x1="760" y1="82" x2="918" y2="82"/>
+    <path d="M980 170 h130 a8 8 0 0 1 8 8 v34 h-138 z"/>
+    <path d="M980 212 v40 a8 8 0 0 0 8 8 h122"/>
+    <line x1="980" y1="188" x2="1118" y2="188"/>
+    <path d="M840 236 h120 a8 8 0 0 1 8 8 v30 h-128 z"/>
+    <path d="M840 274 v14 a8 8 0 0 0 8 8 h112"/>
+  </g>
+  <g fill="#1e293b" opacity="0.6">
+    <rect x="772" y="70" width="30" height="8" rx="4"/>
+    <rect x="812" y="70" width="52" height="8" rx="4"/>
+    <rect x="992" y="180" width="30" height="8" rx="4"/>
+    <rect x="1032" y="180" width="46" height="8" rx="4"/>
+    <rect x="852" y="246" width="30" height="8" rx="4"/>
+    <rect x="892" y="246" width="40" height="8" rx="4"/>
+  </g>
+
+  <!-- ══ Mascot ══ -->
+  <!-- antenna -->
+  <line x1="230" y1="60" x2="230" y2="86" stroke="#4ade80" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="230" cy="52" r="9" fill="#22c55e"/>
+  <circle cx="230" cy="52" r="4" fill="#bbf7d0"/>
+  <!-- head -->
+  <rect x="150" y="86" width="160" height="122" rx="34" fill="url(#metal)"/>
+  <rect x="162" y="98" width="136" height="98" rx="26" fill="#0f172a"/>
+  <!-- eyes: happy, looking right at the speech bubble -->
+  <circle cx="208" cy="140" r="17" fill="#4ade80"/>
+  <circle cx="252" cy="140" r="17" fill="#4ade80"/>
+  <circle cx="214" cy="134" r="6" fill="#052e16"/>
+  <circle cx="258" cy="134" r="6" fill="#052e16"/>
+  <!-- smile -->
+  <path d="M206 168 q24 18 48 0" stroke="#4ade80" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <!-- ears -->
+  <rect x="138" y="120" width="12" height="40" rx="6" fill="#94a3b8"/>
+  <rect x="310" y="120" width="12" height="40" rx="6" fill="#94a3b8"/>
+  <!-- body -->
+  <rect x="172" y="212" width="116" height="76" rx="26" fill="url(#metal)"/>
+  <rect x="196" y="232" width="68" height="36" rx="10" fill="#0f172a"/>
+  <rect x="204" y="242" width="12" height="16" rx="3" fill="#22c55e"/>
+  <rect x="224" y="242" width="12" height="16" rx="3" fill="#4ade80" opacity="0.75"/>
+  <rect x="244" y="242" width="12" height="16" rx="3" fill="#4ade80" opacity="0.5"/>
+  <!-- left arm: pointing at the wordmark -->
+  <rect x="118" y="224" width="52" height="18" rx="9" fill="#94a3b8" transform="rotate(-18 118 224)"/>
+  <circle cx="118" cy="212" r="11" fill="#e2e8f0"/>
+
+  <!-- ══ Speech bubble with SQL ══ -->
+  <g>
+    <path d="M348 84 h216 a16 16 0 0 1 16 16 v70 a16 16 0 0 1 -16 16 h-110 l-24 26 4 -26 h-86 a16 16 0 0 1 -16 -16 v-70 a16 16 0 0 1 16 -16 z" fill="#f8fafc"/>
+    <g font-family="Consolas, 'Courier New', monospace" text-anchor="middle" fill="#0f172a">
+      <text x="464" y="113" font-size="24" font-weight="bold">SELECT</text>
+      <text x="464" y="141" font-size="24" font-weight="bold">FROM</text>
+      <text x="464" y="169" font-size="22" fill="#334155">your.question</text>
+    </g>
+    <!-- drawn check mark: fixed gap and alignment with FROM in any font -->
+    <path d="M407 133 l6 7 12 -15" stroke="#16a34a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- NL arrow toward wordmark -->
+  <g stroke="#4ade80" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M586 150 h34"/>
+    <path d="M610 140 l16 10 -16 10"/>
+  </g>
+
+  <!-- ══ Wordmark ══ -->
+  <text x="668" y="150" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="800" fill="#f8fafc" letter-spacing="1">SQLTalk</text>
+  <rect x="672" y="172" width="222" height="6" rx="3" fill="url(#accent)"/>
+  <text x="670" y="216" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="25" fill="#94a3b8">Natural language in. Real SQL out.</text>
+  <text x="670" y="252" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="19" fill="#64748b">LangChain SQL agent &#183; MS SQL Server &#183; PostgreSQL (Neon)</text>
+</svg>

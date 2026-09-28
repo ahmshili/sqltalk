@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="SQLTalk mascot — a friendly robot with a database torso">
+  <defs>
+    <linearGradient id="m-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#12233a"/>
+    </linearGradient>
+    <linearGradient id="m-metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2e8f0"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+    <radialGradient id="m-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="40" fill="url(#m-bg)"/>
+  <circle cx="128" cy="128" r="118" fill="url(#m-glow)"/>
+
+  <!-- antenna -->
+  <line x1="128" y1="38" x2="128" y2="58" stroke="#4ade80" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="128" cy="30" r="9" fill="#22c55e"/>
+  <circle cx="128" cy="30" r="4" fill="#bbf7d0"/>
+
+  <!-- head -->
+  <rect x="66" y="58" width="124" height="94" rx="28" fill="url(#m-metal)"/>
+  <rect x="76" y="68" width="104" height="74" rx="22" fill="#0f172a"/>
+  <circle cx="108" cy="100" r="14" fill="#4ade80"/>
+  <circle cx="148" cy="100" r="14" fill="#4ade80"/>
+  <circle cx="113" cy="95" r="5" fill="#052e16"/>
+  <circle cx="153" cy="95" r="5" fill="#052e16"/>
+  <path d="M112 120 q16 13 32 0" stroke="#4ade80" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- ears -->
+  <rect x="54" y="84" width="12" height="34" rx="6" fill="#94a3b8"/>
+  <rect x="190" y="84" width="12" height="34" rx="6" fill="#94a3b8"/>
+
+  <!-- body: database cylinder -->
+  <ellipse cx="128" cy="176" rx="46" ry="12" fill="#cbd5e1"/>
+  <path d="M82 176 v34 a46 12 0 0 0 92 0 v-34" fill="url(#m-metal)"/>
+  <ellipse cx="128" cy="176" rx="46" ry="12" fill="#f1f5f9"/>
+  <ellipse cx="128" cy="192" rx="46" ry="11" fill="none" stroke="#94a3b8" stroke-width="2.5" opacity="0.7"/>
+  <ellipse cx="128" cy="206" rx="45" ry="10" fill="none" stroke="#94a3b8" stroke-width="2.5" opacity="0.5"/>
+  <text x="128" y="181" text-anchor="middle" font-family="Consolas, 'Courier New', monospace" font-size="15" font-weight="bold" fill="#0f172a">SQL</text>
+</svg>

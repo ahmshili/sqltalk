@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Iterable, List
 
 from app.config.settings import DEFAULT_BLOCKED_KEYWORDS
+from app.database.uri import MSSQL_DIALECT
 
 # Matches a keyword only as a standalone SQL token (word boundary on both
 # sides), so e.g. a column named "created_at" doesn't trip the "CREATE" guard.
@@ -58,26 +59,50 @@ def is_safe(sql: str, blocked_keywords: Iterable[str] = DEFAULT_BLOCKED_KEYWORDS
     return not find_violations(sql, blocked_keywords)
 
 
-def enforce_row_limit(sql: str, max_rows: int) -> str:
-    """Best-effort injection of a `TOP N` clause into a `SELECT` statement
+def enforce_row_limit(sql: str, max_rows: int, dialect: str = MSSQL_DIALECT) -> str:
+    """Best-effort injection of a row-limit clause into a `SELECT` statement
     that doesn't already limit its result set, to avoid huge result sets
     being pulled back and dumped into the conversation.
 
-    This is intentionally conservative: if the statement already contains
-    TOP/OFFSET or isn't a simple SELECT, it's left untouched rather than risk
-    producing invalid T-SQL.
+    The clause is dialect-specific:
+
+      * `mssql` (default) — `SELECT TOP N ...` (T-SQL)
+      * `postgres`        — `SELECT ... LIMIT N`
+
+    This is intentionally conservative: if the statement already contains a
+    limit clause or isn't a simple SELECT, it's left untouched rather than
+    risk producing invalid SQL.
     """
     stripped = sql.strip()
     if not re.match(r"(?is)^\s*select\b", stripped):
         return sql
-    if re.search(r"(?is)\btop\s*\(?\s*\d+\s*\)?", stripped):
+
+    if dialect == MSSQL_DIALECT:
+        # Already bounded: TOP (N) / TOP N, or a FETCH/OFFSET pagination.
+        if re.search(r"(?is)\btop\s*\(?\s*\d+\s*\)?", stripped):
+            return sql
+        if re.search(r"(?is)\boffset\b", stripped):
+            return sql
+
+        return re.sub(
+            r"(?is)^\s*select\b",
+            f"SELECT TOP {max_rows}",
+            stripped,
+            count=1,
+        )
+
+    # PostgreSQL (and anything else LIMIT-shaped).
+    if re.search(r"(?is)\blimit\s+\d+\b", stripped):
         return sql
     if re.search(r"(?is)\boffset\b", stripped):
         return sql
+    if re.search(r"(?is)\bfetch\s+(first|next)\b", stripped):
+        return sql
 
-    return re.sub(
-        r"(?is)^\s*select\b",
-        f"SELECT TOP {max_rows}",
-        stripped,
-        count=1,
-    )
+    lines = stripped.splitlines()
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip() and not lines[i].strip().startswith("--"):
+            lines[i] = f"{lines[i].rstrip()} LIMIT {max_rows}"
+            return "\n".join(lines)
+
+    return sql

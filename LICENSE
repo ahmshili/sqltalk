@@ -1,26 +1,48 @@
 SQLTalk — Restricted Evaluation License
 Copyright (c) 2026 Ahmed Shili (https://github.com/ahmshili, https://ashili.pages.dev)
 
-This software and associated documentation files (the "Software") are made
-available for the following purposes only:
+Purpose of publication
+----------------------
+
+This Software is made publicly available for one express purpose: to be
+**evaluated and reviewed by recruiters, hiring teams, and other technical
+reviewers** as a demonstration of the author's software engineering work.
+It is shared for evaluation review only — not as open-source software under
+a standard OSI license.
+
+The Software must remain in its original repository
+(https://github.com/ahmshili/sqltalk). It may not be forked, mirrored, or
+re-published elsewhere (see "Not permitted" below). Submitting improvements
+back to the original repository — as a pull request or a bug report — is
+welcome and permitted.
+
+Grant
+-----
+
+Subject to the restrictions below, permission is granted to use the
+Software for the following purposes only:
 
   1. Personal evaluation and testing of the Software, including running it
      locally against your own database and language-model credentials.
-  2. Code review, learning from, and discussing the Software's source code.
-  3. Preparing and submitting a pull request back to this Software's own
-     repository (i.e. contributing improvements upstream to this project).
+  2. Code review, learning from, and discussing the Software's source code,
+     including as part of a recruiting or hiring evaluation.
+  3. Preparing and submitting a pull request or bug report back to this
+     Software's own repository (i.e. contributing improvements or defect
+     reports upstream to this project).
 
 The following are expressly NOT permitted without prior written permission
 from the copyright holder:
 
   a. Forking, redistributing, publishing, or otherwise making available
      copies or substantial portions of the Software, whether modified or
-     unmodified, under this or any other name.
+     unmodified, under this or any other name — including uploading it to
+     any other repository, account, or platform.
   b. Any commercial use, including but not limited to selling, sublicensing,
      hosting as a paid service, or incorporating the Software (in whole or
      in part) into a commercial product or offering.
   c. Using the Software, or any derivative of it, for any purpose other
-     than those listed above.
+     than those listed above (evaluation, review, and upstream
+     contribution).
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

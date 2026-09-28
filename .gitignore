@@ -29,3 +29,5 @@ htmlcov/
 *.bak
 *.sqlite
 *.db
+
+*.zip

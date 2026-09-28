@@ -1,10 +1,10 @@
 """Custom SQL agent toolkit.
 
 Extends LangChain's `SQLDatabaseToolkit` with:
-  * a tightened query-checker prompt tailored to T-SQL,
+  * dialect-tightened query-checker prompts (T-SQL or PostgreSQL),
   * a safety gate that rejects destructive statements when read-only mode
     is on (app.database.safety),
-  * a row cap applied to every executed SELECT,
+  * a dialect-aware row cap applied to every executed SELECT,
   * a transparency hook so the UI can show exactly which SQL was executed
     and what came back, without needing `return_intermediate_steps`.
 """
@@ -23,8 +23,9 @@ from langchain_community.tools.sql_database.tool import (
 )
 
 from app.database.safety import enforce_row_limit, find_violations
+from app.database.uri import MSSQL_DIALECT, POSTGRES_DIALECT
 
-CUSTOM_QUERY_CHECKER = """
+CUSTOM_QUERY_CHECKER_MSSQL = """
     {query}
     Double check the {dialect} query above for common mistakes, including:
     - Using NOT IN with NULL values
@@ -47,6 +48,42 @@ CUSTOM_QUERY_CHECKER = """
 
     SQL Query: """
 
+CUSTOM_QUERY_CHECKER_POSTGRES = """
+    {query}
+    Double check the {dialect} query above for common mistakes, including:
+    - Using NOT IN with NULL values
+    - Using UNION when UNION ALL should have been used
+    - Using BETWEEN for exclusive ranges
+    - Data type mismatch in predicates
+    - Properly quoting identifiers
+    - Using the correct number of arguments for functions
+    - Casting to the correct data type
+    - Using the proper columns for joins
+    - Using LIMIT instead of TOP (this is PostgreSQL, not T-SQL)
+    - Using CURRENT_DATE instead of GETDATE() for today's date
+    - Using ILIKE for case-insensitive matching
+
+    IMPORTANT: make sure the query matches {dialect} (PostgreSQL) syntax.
+
+    If there are any of the above mistakes, rewrite the query. If there are no
+    mistakes, just reproduce the original query.
+
+    Output the final SQL query only.
+
+    SQL Query: """
+
+
+def get_query_checker_template(dialect: str) -> str:
+    """Return the query-checker prompt for the active database dialect.
+
+    The two templates differ exactly where the dialects differ: row-limit
+    syntax (`TOP N` vs `LIMIT N`) and date functions (`GETDATE()` vs
+    `CURRENT_DATE`).
+    """
+    if dialect == POSTGRES_DIALECT:
+        return CUSTOM_QUERY_CHECKER_POSTGRES
+    return CUSTOM_QUERY_CHECKER_MSSQL
+
 
 class GuardedQuerySQLDatabaseTool(QuerySQLDataBaseTool):
     """A query-execution tool that enforces read-only safety and a row cap
@@ -56,6 +93,9 @@ class GuardedQuerySQLDatabaseTool(QuerySQLDataBaseTool):
 
     read_only: bool = True
     max_rows: int = 200
+    # NOTE: the field cannot be named `dialect` — BaseSQLDatabaseTool already
+    # exposes a `dialect` property and pydantic v1 rejects shadowing it.
+    sql_dialect: str = MSSQL_DIALECT
     on_query: Optional[Callable[[str, str, bool], None]] = None
 
     def _run(self, query: str, **kwargs) -> str:  # type: ignore[override]
@@ -70,7 +110,7 @@ class GuardedQuerySQLDatabaseTool(QuerySQLDataBaseTool):
                     "SELECT statement."
                 )
 
-        capped_query = enforce_row_limit(query, self.max_rows)
+        capped_query = enforce_row_limit(query, self.max_rows, self.sql_dialect)
         result = super()._run(capped_query, **kwargs)
 
         if self.on_query:
@@ -80,11 +120,12 @@ class GuardedQuerySQLDatabaseTool(QuerySQLDataBaseTool):
 
 
 class SQLTalkToolkit(SQLDatabaseToolkit):
-    """Toolkit for interacting with SQL Server, wired up for safety and
-    transparency."""
+    """Toolkit for interacting with SQL Server or PostgreSQL, wired up for
+    safety and transparency."""
 
     read_only: bool = True
     max_rows: int = 200
+    sql_dialect: str = MSSQL_DIALECT
     on_query: Optional[Callable[[str, str, bool], None]] = None
 
     def get_tools(self) -> List[BaseTool]:
@@ -101,13 +142,17 @@ class SQLTalkToolkit(SQLDatabaseToolkit):
             ),
         )
 
+        sql_flavor = (
+            "PostgreSQL query" if self.sql_dialect == POSTGRES_DIALECT else "T-SQL query"
+        )
         query_sql_database_tool = GuardedQuerySQLDatabaseTool(
             db=self.db,
             read_only=self.read_only,
             max_rows=self.max_rows,
+            sql_dialect=self.sql_dialect,
             on_query=self.on_query,
             description=(
-                "Input to this tool is a detailed and correct T-SQL query, "
+                f"Input to this tool is a detailed and correct {sql_flavor}, "
                 "output is a result from the database. If the query is not "
                 "correct, an error message will be returned. If an error is "
                 "returned, rewrite the query, check the query, and try "
@@ -120,7 +165,7 @@ class SQLTalkToolkit(SQLDatabaseToolkit):
         query_sql_checker_tool = QuerySQLCheckerTool(
             db=self.db,
             llm=self.llm,
-            template=CUSTOM_QUERY_CHECKER,
+            template=get_query_checker_template(self.sql_dialect),
             description=(
                 "Use this tool to double check if your query is correct "
                 "before executing it. Always use this tool before executing "

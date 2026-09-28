@@ -1,4 +1,4 @@
-"""Multi-schema support for SQL Server.
+"""Multi-schema support for SQL Server and PostgreSQL.
 
 LangChain's `SQLDatabase` reflects a single schema by default, which on SQL
 Server resolves to the connection's default schema — almost always `dbo`.
@@ -9,8 +9,9 @@ reflection leaves the agent able to see only a handful of housekeeping
 tables and none of the data anyone actually asks about.
 
 `MultiSchemaSQLDatabase` reflects every relevant schema into one shared
-catalog so schema-qualified names (`Production.Product`) both show up in
-`get_usable_table_names()` and resolve correctly in `get_table_info()`.
+catalog so schema-qualified names (`Production.Product`, `sales.orders`) both
+show up in `get_usable_table_names()` and resolve correctly in
+`get_table_info()`.
 """
 
 from __future__ import annotations
@@ -21,6 +22,8 @@ from langchain_community.utilities.sql_database import SQLDatabase
 from sqlalchemy import MetaData, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.schema import CreateTable
+
+from app.database.uri import POSTGRES_DIALECT
 
 # Built-in SQL Server schemas that are never useful to a natural-language
 # business-data agent. Excluded from auto-discovery.
@@ -39,15 +42,28 @@ SYSTEM_SCHEMAS = {
     "db_denydatawriter",
 }
 
+# PostgreSQL system schemas. `public` is deliberately NOT listed: on Neon it
+# holds user tables, and the demo seed data lives in lowercase business
+# schemas next to it.
+PG_SYSTEM_SCHEMAS = {"pg_catalog", "pg_toast", "information_schema"}
 
-def discover_business_schemas(engine: Engine) -> List[str]:
-    """Return every schema in the database except SQL Server's built-in
-    system/role schemas, so the agent sees real business tables by default
-    without needing per-database configuration.
+
+def discover_business_schemas(engine: Engine, dialect: Optional[str] = None) -> List[str]:
+    """Return every schema in the database except the dialect's built-in
+    system schemas, so the agent sees real business tables by default without
+    needing per-database configuration.
+
+    `dialect` takes this app's tokens (`mssql`/`postgres`); when omitted the
+    SQLAlchemy engine's own dialect name decides.
     """
     inspector = inspect(engine)
+    if dialect is not None:
+        is_postgres = dialect == POSTGRES_DIALECT
+    else:
+        is_postgres = engine.dialect.name == "postgresql"
+    system = PG_SYSTEM_SCHEMAS if is_postgres else SYSTEM_SCHEMAS
     return sorted(
-        s for s in inspector.get_schema_names() if s.lower() not in SYSTEM_SCHEMAS
+        s for s in inspector.get_schema_names() if s.lower() not in system
     )
 
 

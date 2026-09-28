@@ -1,8 +1,11 @@
 langchain==0.2.16
 langchain-community==0.2.16
 langchain-openai==0.1.23
+langchain-groq==0.1.9
+langchain-google-genai==1.0.10
 python-dotenv==1.0.1
 streamlit==1.38.0
 pyodbc==5.1.0
+psycopg2-binary==2.9.9
 SQLAlchemy==2.0.32
 pytest==8.3.2

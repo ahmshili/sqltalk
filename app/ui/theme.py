@@ -3,7 +3,58 @@
 Kept intentionally simple (no external UI framework): a single CSS block
 injected once, using Streamlit's own theme variables where possible so the
 app respects the user's light/dark preference instead of fighting it.
+
+Branding assets (assets/banner.svg, assets/mascot.svg) are inlined by
+`banner_img` / `mascot_img` as data-URI `<img>` tags — data URIs are the one
+reliable way to render SVG through Streamlit's `unsafe_allow_html` across
+deployments. Every helper degrades to an empty string (and callers to a
+plain-text fallback) if the asset file is missing.
 """
+
+from __future__ import annotations
+
+import base64
+from functools import lru_cache
+from pathlib import Path
+
+ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
+
+
+@lru_cache(maxsize=None)
+def _svg_data_uri(filename: str) -> str | None:
+    """Read an SVG asset and encode it as a data URI (None if missing)."""
+    path = ASSETS_DIR / filename
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
+def banner_img() -> str | None:
+    """`<img>` tag for the banner SVG, or None when the asset is absent."""
+    uri = _svg_data_uri("banner.svg")
+    if not uri:
+        return None
+    return (
+        f'<img class="sqltalk-banner-img" src="{uri}" '
+        'alt="SQLTalk — natural language in, real SQL out" draggable="false">'
+    )
+
+
+def mascot_img(size: int = 64, extra_class: str = "") -> str | None:
+    """`<img>` tag for the mascot SVG at a given pixel size, or None when
+    the asset is absent."""
+    uri = _svg_data_uri("mascot.svg")
+    if not uri:
+        return None
+    cls = f"sqltalk-mascot {extra_class}".strip()
+    return (
+        f'<img class="{cls}" src="{uri}" width="{size}" height="{size}" '
+        'alt="SQLTalk mascot" draggable="false">'
+    )
+
 
 CUSTOM_CSS = """
 <style>
@@ -40,6 +91,65 @@ CUSTOM_CSS = """
 }
 .sqltalk-attribution a {
     text-decoration: none;
+}
+
+/* Banner (header identity image) */
+.sqltalk-banner {
+    margin: 0 0 0.75rem 0;
+    border-radius: 18px;
+    overflow: hidden;
+    line-height: 0;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+.sqltalk-banner-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Mascot accents */
+.sqltalk-mascot {
+    border-radius: 20%;
+    vertical-align: middle;
+}
+.empty-state .sqltalk-mascot {
+    margin-bottom: 0.75rem;
+}
+
+/* About card */
+.about-card {
+    border: 1px solid rgba(120, 120, 120, 0.25);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    margin-top: 0.25rem;
+}
+.about-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.4rem;
+}
+.about-name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.2;
+}
+.about-role {
+    color: var(--text-color-secondary, #8a8a8a);
+    font-size: 0.8rem;
+}
+.about-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    font-size: 0.88rem;
+    margin-top: 0.5rem;
+}
+.about-links a {
+    text-decoration: none;
+}
+.about-links a:hover {
+    text-decoration: underline;
 }
 
 /* Status pill */
