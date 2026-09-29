@@ -9,8 +9,8 @@ or PostgreSQL (free public demo on Neon) without any call-site changes.
   * `mssql` (default) — SQLAlchemy + pyodbc + ODBC Driver 18, exactly the
     URI format this project has always used locally. Nothing about the
     existing workflow changes when the dialect is left at its default.
-  * `postgres` — SQLAlchemy + psycopg2 with TLS required, the format Neon's
-    free tier hands out (see DEPLOYMENT.md).
+  * `postgres` — SQLAlchemy + psycopg2 with TLS required, the format managed
+    providers like Neon hand out.
 """
 
 from __future__ import annotations

@@ -186,7 +186,7 @@ def _render_missing_config(missing: list) -> None:
         "Missing required configuration: "
         + ", ".join(f"`{m}`" for m in missing)
         + ". Add these to your `.env` file (see `.env.example`) — or to "
-        "Streamlit secrets when deploying (see DEPLOYMENT.md)."
+        "Streamlit secrets when deploying."
     )
 
 

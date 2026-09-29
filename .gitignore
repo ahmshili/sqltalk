@@ -30,4 +30,7 @@ htmlcov/
 *.sqlite
 *.db
 
+# Local-only operational docs (never published)
+docs/
+
 *.zip

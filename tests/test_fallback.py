@@ -34,7 +34,9 @@ def _agent(output: str | None = None, error: Exception | None = None):
     if error is not None:
         agent.invoke.side_effect = error
     else:
-        agent.invoke.return_value = {"output": output or "answer"}
+        # NB: `output or "answer"` would silently rewrite an empty-string
+        # output to "answer", masking the all-garbage fallback path.
+        agent.invoke.return_value = {"output": "answer" if output is None else output}
     return agent
 
 

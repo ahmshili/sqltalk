@@ -134,7 +134,7 @@ def _get_keys(provider: str) -> List[str]:
       GROQ_API_KEY_2=key2
 
     Streamlit Cloud does not allow the same secret key twice, which is why
-    the numbered form exists — see DEPLOYMENT.md.
+    the numbered form exists.
     """
     keys: List[str] = []
     raw = os.getenv(f"{provider.upper()}_API_KEY", "")
