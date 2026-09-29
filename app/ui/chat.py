@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 import traceback
 from typing import List
@@ -12,6 +13,11 @@ import streamlit as st
 from app.ui.theme import EXAMPLE_QUESTIONS, mascot_img
 
 logger = logging.getLogger("sqltalk")
+
+
+def _dev_mode_enabled() -> bool:
+    """Dev mode is env-gated (same rule as the sidebar)."""
+    return os.getenv("DEV_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def render_example_strip() -> None:
@@ -74,6 +80,7 @@ def _render_transparency(sql_log: List[dict], duration: float | None, show: bool
     if not show:
         return
 
+    dev_mode = _dev_mode_enabled()
     tab_sql, tab_results, tab_exec = st.tabs(
         ["▸ Generated SQL", "▸ Query Results", "▸ Execution Details"]
     )
@@ -87,7 +94,13 @@ def _render_transparency(sql_log: List[dict], duration: float | None, show: bool
             if entry["ok"]:
                 st.text(entry["result"])
             else:
-                st.error(entry["result"])
+                # Raw database errors can name hosts, credentials sinks, or
+                # internal identifiers: normal mode gets a neutral message,
+                # dev mode keeps the raw text for debugging.
+                if dev_mode:
+                    st.error(entry["result"])
+                else:
+                    st.error("This query could not be completed. See Generated SQL for what was attempted.")
 
     with tab_exec:
         total = len(sql_log)
@@ -210,12 +223,16 @@ def handle_chat_turn(agent_executor, prompt: str) -> None:
                     _record_llm_ok()
             except Exception as exc:  # noqa: BLE001
                 output = _friendly_error(exc)
+                # The full traceback goes to the server-side log unconditionally
+                # (the terminal running `streamlit run` always has the real
+                # cause), but is only SHOWN in the UI in developer mode — in
+                # normal mode a public visitor must not see provider names,
+                # model slugs, or infrastructure details from a traceback.
                 error_detail = traceback.format_exc()
-                # Always log the full traceback server-side, regardless of
-                # whether the UI's debug expander is opened, so the terminal
-                # running `streamlit run` always has the real cause.
                 logger.exception("Agent execution failed")
                 _record_llm_down()
+                if not _dev_mode_enabled():
+                    error_detail = None
             duration = time.time() - start
 
         st.markdown(output)

@@ -81,10 +81,19 @@ def render_database_section(settings: Settings) -> None:
     else:
         st.markdown(_status_pill("unknown", "Not tested"), unsafe_allow_html=True)
 
-    st.caption(f"Server: `{info.server}`")
-    st.caption(f"Database: `{info.database}`")
-    st.caption(f"Driver: `{info.driver}`")
-    st.caption(f"Dialect: `{get_db_dialect()}`")
+    # Privacy: normal mode shows the server *kind*, never the hostname,
+    # database name, or connection details (those can identify infrastructure
+    # and are of no value to a reviewer). Dev mode keeps the full detail.
+    if _dev_mode_enabled():
+        st.caption(f"Server: `{info.server}`")
+        st.caption(f"Database: `{info.database}`")
+        st.caption(f"Driver: `{info.driver}`")
+        st.caption(f"Dialect: `{get_db_dialect()}`")
+    else:
+        dialect = get_db_dialect()
+        server_kind = "PostgreSQL" if dialect == "postgres" else "SQL Server"
+        st.caption(f"Server type: **{server_kind}**")
+        st.caption("Database: **SQLTalk demo**")
 
     if st.button("Test connection", use_container_width=True):
         with st.spinner("Testing connection..."):

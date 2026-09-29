@@ -5,6 +5,21 @@ def test_safe_select_is_accepted():
     assert is_safe("SELECT TOP 10 ProductID, Name FROM Production.Product")
 
 
+def test_cte_wrapped_write_is_caught_by_keyword_gate():
+    # Regression: WITH-wrapped writes (Postgres data-modifying CTEs) must
+    # trip the keyword gate — CTE wrapping must not hide writes from the
+    # read-only guard shared by the agent and the SQL console.
+    assert not is_safe("WITH moved AS (DELETE FROM t RETURNING *) SELECT * FROM moved")
+    assert not is_safe("WITH x AS (UPDATE t SET a = 1) SELECT * FROM x")
+    assert not is_safe("WITH x AS (INSERT INTO t VALUES (1)) SELECT * FROM x")
+
+
+def test_block_comment_smuggling_is_caught():
+    # A leading block comment must not hide a destructive statement; the
+    # gate inspects the full statement text.
+    assert not is_safe("/* note */ DELETE FROM t")
+
+
 def test_select_with_column_named_like_keyword_is_safe():
     # "created_at" must not falsely trigger the CREATE guard.
     assert is_safe("SELECT created_at FROM Orders")

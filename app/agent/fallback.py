@@ -104,6 +104,11 @@ class FallbackAgentChain:
 
     agents: List[AgentExecutor]
     specs: List[ProviderSpec]
+    # The shared database reflection every agent's toolkit was built on.
+    # Exposed so UI views beyond the chat (Data Explorer, SQL Console) can
+    # reuse the same read-only catalog instead of re-reflecting the DB.
+    # Excluded from repr/comparison like the other runtime state.
+    db: Optional[SQLDatabase] = field(default=None, repr=False, compare=False)
     # LLM clients aligned index-for-index with agents/specs. Stored so the
     # health check can ping each provider directly without running the full
     # SQL agent; excluded from repr/comparison like other runtime state.
@@ -309,4 +314,4 @@ def build_fallback_agent_chain(
         built_specs.append(spec)
         built_llms.append(llm)
 
-    return FallbackAgentChain(agents=agents, specs=built_specs, llms=built_llms)
+    return FallbackAgentChain(agents=agents, specs=built_specs, llms=built_llms, db=db)

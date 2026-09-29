@@ -19,6 +19,8 @@ from app.config.settings import (
 )
 from app.database.connection import DatabaseConnectionError
 from app.ui.chat import handle_chat_turn, render_empty_state, render_messages, render_example_strip
+from app.ui.console_view import render_sql_console
+from app.ui.explorer import render_data_explorer
 from app.ui.sidebar import LLM_HEALTH_KEY, LLM_HEALTH_SIG_KEY, render_sidebar
 from app.ui.theme import CUSTOM_CSS, banner_img, mascot_img
 
@@ -283,7 +285,7 @@ def main() -> None:
             settings.max_rows,
             settings.read_only,
             tuple(settings.db_schemas) if settings.db_schemas else None,
-            dialect,
+            settings.db_dialect,
             tuple(sorted(dev["provider_models"].items())),
             tuple(sorted((p, tuple(k)) for p, k in dev["keys_by_provider"].items())),
             tuple(dev["provider_order"]),
@@ -306,22 +308,47 @@ def main() -> None:
     _run_auto_llm_check(chain)
     _run_pending_llm_test(chain)
 
-    if not st.session_state.messages:
-        render_empty_state()
+    # The explorer and console reuse the chain's shared database reflection
+    # (same read-only catalog every agent sees). `chain.db` is always set by
+    # build_fallback_agent_chain; the fallback guards against a manually
+    # constructed chain so the UI degrades to chat-only, never blank.
+    chain_db = getattr(chain, "db", None)
+
+    # -- main-area views -----------------------------------------------------
+    # The sidebar radio picks what the main area shows: the chat (default),
+    # the graphical Data Explorer, or the read-only SQL Console.
+    view = st.sidebar.radio(
+        "View",
+        options=("💬 Chat", "📊 Data Explorer", "🧪 SQL Console"),
+        key="main_view",
+        label_visibility="collapsed",
+    )
+
+    if view == "💬 Chat":
+        if not st.session_state.messages:
+            render_empty_state()
+        else:
+            render_messages(show_sql_details=st.session_state.get("show_sql_details", False))
+
+        prompt = st.chat_input("Ask your database...")
+        pending = st.session_state.pop("pending_prompt", None)
+        prompt = prompt or pending
+
+        if prompt:
+            handle_chat_turn(chain, prompt)
+            st.rerun()
+
+        # Persistent example strip: rendered every rerun below the input so the
+        # example prompts survive past the first message (see app/ui/chat.py).
+        render_example_strip()
+    elif chain_db is None:
+        # No shared DB reflection available (manually-constructed chain):
+        # degrade to chat-only rather than showing dead explorer/console UI.
+        st.info("Chat is available; the Data Explorer and SQL Console need a database connection.")
+    elif view == "📊 Data Explorer":
+        render_data_explorer(chain_db, settings.db_dialect)
     else:
-        render_messages(show_sql_details=st.session_state.get("show_sql_details", False))
-
-    prompt = st.chat_input("Ask your database...")
-    pending = st.session_state.pop("pending_prompt", None)
-    prompt = prompt or pending
-
-    if prompt:
-        handle_chat_turn(chain, prompt)
-        st.rerun()
-
-    # Persistent example strip: rendered every rerun below the input so the
-    # example prompts survive past the first message (see app/ui/chat.py).
-    render_example_strip()
+        render_sql_console(chain_db, settings.db_dialect)
 
     render_footer(
         settings,

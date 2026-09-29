@@ -33,6 +33,7 @@ from app.database.uri import (
     MSSQL_DIALECT,
     POSTGRES_DIALECT,
     DEFAULT_POSTGRES_SSLMODE,
+    dialect_from_connection_string,
     resolve_dialect,
 )
 
@@ -226,9 +227,39 @@ def get_provider_keys(provider: str) -> List[str]:
     return _get_keys(provider)
 
 
+def _resolve_active_dialect() -> str:
+    """Resolve the dialect of the *actual* configured database.
+
+    The connection string is authoritative (its scheme says which server
+    kind it points at); `DB_DIALECT` is only a selector between the two
+    *parts-based* profiles and is never leaked as a default. This matters
+    because a Neon URI plus no `DB_DIALECT` must resolve to `postgres` —
+    the old env-only default produced `mssql` and the UI mislabeled a
+    Postgres connection.
+    """
+    explicit = os.getenv("DB_CONNECTION_STRING")
+    if explicit:
+        return dialect_from_connection_string(explicit)
+    raw = os.getenv("DB_DIALECT")
+    if raw and raw.strip():
+        return resolve_dialect(raw)
+    # No URI, no selector: infer from the parts form, else the project
+    # default (a local SQL Server remains the zero-config workflow).
+    if os.getenv("DB_HOST"):
+        return POSTGRES_DIALECT if _postgres_parts_present() else MSSQL_DIALECT
+    return MSSQL_DIALECT
+
+
+def _postgres_parts_present() -> bool:
+    """Heuristic for the parts form: DB_SSLMODE is Postgres-only, and
+    DB_DIALECT=postgres is checked by the caller before this is consulted."""
+    return bool(os.getenv("DB_SSLMODE")) or (os.getenv("DB_PORT", "").strip() == "5432")
+
+
 def get_db_dialect() -> str:
-    """Resolve the active database dialect from `DB_DIALECT` (default mssql)."""
-    return _get_db_dialect()
+    """Resolve the dialect of the active database (URI scheme first,
+    `DB_DIALECT` second, then the mssql default)."""
+    return _resolve_active_dialect()
 
 
 def _get_db_dialect() -> str:
@@ -296,6 +327,7 @@ class Settings:
     max_iterations: int
     max_rows: int
     read_only: bool
+    db_dialect: str = MSSQL_DIALECT
     db_schemas: Optional[List[str]] = None
     blocked_keywords: List[str] = field(
         default_factory=lambda: list(DEFAULT_BLOCKED_KEYWORDS)
@@ -348,6 +380,7 @@ def load_settings(
         max_iterations=max_iterations or _get_int("AGENT_MAX_ITERATIONS", DEFAULT_MAX_ITERATIONS),
         max_rows=max_rows or _get_int("AGENT_MAX_ROWS", DEFAULT_MAX_ROWS),
         read_only=read_only if read_only is not None else _get_bool("READ_ONLY_MODE", DEFAULT_READ_ONLY),
+        db_dialect=_resolve_active_dialect(),
         db_schemas=_get_schemas(),
     )
 
