@@ -229,18 +229,6 @@ Issue in **this repository**:
 passwords into an issue. A sanitized error message and your `DB_DIALECT` /
 Python version are usually enough to reproduce.
 
-## Project origin & attribution
-
-SQLTalk is a complete architectural rewrite — new project structure,
-configuration system, LLM integration, safety layer, UI, and documentation —
-built using an existing open-source Streamlit SQL chatbot as a functional
-starting point. It is **not** a fork and is not published as, or intended to
-be confused with, that project; no files, branding, or license text from it
-are reused. It shares the same general idea (LangChain + Streamlit +
-natural-language-to-SQL) as the publicly available `trinhvanminh/SQL_Agent`
-project, implemented independently with different naming, code
-organization, UI, and provider integration.
-
 ## License
 
 See [`LICENSE`](./LICENSE). This project is shared under a **restricted

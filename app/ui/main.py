@@ -24,6 +24,12 @@ from app.ui.explorer import render_data_explorer
 from app.ui.sidebar import LLM_HEALTH_KEY, LLM_HEALTH_SIG_KEY, render_sidebar
 from app.ui.theme import CUSTOM_CSS, banner_img, mascot_img
 
+# Top-nav view labels (icons are part of the label on purpose: they render
+# at a larger size than the text via the .main-block nav CSS).
+VIEW_CHAT = "💬 Ask a Question"
+VIEW_EXPLORER = "📊 Data Explorer"
+VIEW_CONSOLE = "🧪 SQL Console"
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
@@ -241,20 +247,32 @@ def main() -> None:
     st.set_page_config(
         page_title="SQLTalk",
         page_icon="assets/mascot-favicon.png" if Path("assets/mascot-favicon.png").is_file() else "🗃️",
-        layout="centered",
+        layout="wide",
     )
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
     init_session_state()
+    dev_mode = _is_dev_mode()
     settings = load_settings()
     render_header()
+
+    # -- top navigation (main area) ------------------------------------------
+    # The view switcher lives at the top of the page — the first thing a
+    # reviewer sees — because all three views are core app features, not
+    # hidden settings. Descriptive labels + large icons make that obvious.
+    view = st.radio(
+        "View",
+        options=(VIEW_CHAT, VIEW_EXPLORER, VIEW_CONSOLE),
+        key="main_view",
+        label_visibility="collapsed",
+        horizontal=True,
+    )
 
     agent_overrides = render_sidebar(settings)
     settings.read_only = agent_overrides["read_only"]
     settings.max_iterations = agent_overrides["max_iterations"]
     settings.max_rows = agent_overrides["max_rows"]
 
-    dev_mode = _is_dev_mode()
     dialect = get_db_dialect()
     if dev_mode:
         dev = _collect_dev_overrides()
@@ -292,8 +310,11 @@ def main() -> None:
         )
     except DatabaseConnectionError as exc:
         st.error(exc.message)
-        with st.expander("Technical details"):
-            st.code(exc.detail or "No further details available.")
+        # Raw connection errors embed hostnames and the connecting role
+        # (e.g. Neon's `role "user@ep-xxxx"`) — developer mode only.
+        if dev_mode:
+            with st.expander("Technical details"):
+                st.code(exc.detail or "No further details available.")
         return
     except ValueError as exc:
         st.error(str(exc))
@@ -315,16 +336,9 @@ def main() -> None:
     chain_db = getattr(chain, "db", None)
 
     # -- main-area views -----------------------------------------------------
-    # The sidebar radio picks what the main area shows: the chat (default),
-    # the graphical Data Explorer, or the read-only SQL Console.
-    view = st.sidebar.radio(
-        "View",
-        options=("💬 Chat", "📊 Data Explorer", "🧪 SQL Console"),
-        key="main_view",
-        label_visibility="collapsed",
-    )
-
-    if view == "💬 Chat":
+    # The nav radio above picks what the main area shows: the chat
+    # (default), the graphical Data Explorer, or the read-only SQL Console.
+    if view == VIEW_CHAT:
         if not st.session_state.messages:
             render_empty_state()
         else:
@@ -345,7 +359,7 @@ def main() -> None:
         # No shared DB reflection available (manually-constructed chain):
         # degrade to chat-only rather than showing dead explorer/console UI.
         st.info("Chat is available; the Data Explorer and SQL Console need a database connection.")
-    elif view == "📊 Data Explorer":
+    elif view == VIEW_EXPLORER:
         render_data_explorer(chain_db, settings.db_dialect)
     else:
         render_sql_console(chain_db, settings.db_dialect)

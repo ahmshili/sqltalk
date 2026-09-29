@@ -32,6 +32,15 @@ def test_show_and_explain_allowed():
 def test_direct_delete_rejected():
     reason = check_query("DELETE FROM sales.orders")
     assert reason is not None and "Blocked" in reason
+    # Explicit no-writes messaging: the user is told modification is
+    # impossible, not just that the statement failed.
+    assert "cannot modify, insert, or delete" in reason
+
+
+def test_non_select_statement_gets_no_writes_message():
+    reason = check_query("VACUUM")
+    assert reason is not None
+    assert "cannot modify, insert, or delete" in reason
 
 
 def test_cte_wrapped_delete_rejected():

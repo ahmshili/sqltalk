@@ -104,8 +104,9 @@ def render_database_section(settings: Settings) -> None:
             except DatabaseConnectionError as exc:
                 st.session_state[status_key] = "fail"
                 st.error(exc.message)
-                with st.expander("Technical details"):
-                    st.code(exc.detail or "No further details available.")
+                if _dev_mode_enabled():
+                    with st.expander("Technical details"):
+                        st.code(exc.detail or "No further details available.")
 
 
 def render_llm_section(settings: Settings, *, dev_mode: bool) -> None:
@@ -176,12 +177,25 @@ def render_agent_section() -> dict:
     )
     st.session_state["show_sql_details"] = show_sql_details
 
-    read_only = st.toggle(
-        "Read-only mode",
-        value=st.session_state.get("read_only", True),
-        help="When enabled, statements like DROP, DELETE, TRUNCATE, ALTER, "
-        "INSERT, and UPDATE are rejected before they reach the database.",
-    )
+    if _dev_mode_enabled():
+        read_only = st.toggle(
+            "Read-only mode",
+            value=st.session_state.get("read_only", True),
+            help="When enabled, statements like DROP, DELETE, TRUNCATE, ALTER, "
+            "INSERT, and UPDATE are rejected before they reach the database.",
+        )
+    else:
+        # Production behavior: read-only is a product guarantee, not a
+        # preference — a public visitor cannot switch it off.
+        read_only = True
+        st.markdown(
+            _status_pill("connected", "🔒 Read-only: enforced"),
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "This demo cannot modify, insert, or delete data — by design. "
+            "Developer mode can unlock this."
+        )
     max_iterations = st.slider(
         "Max iterations",
         min_value=2,
@@ -259,14 +273,14 @@ def render_provider_order_section() -> None:
 # -- About: the author's personal contact card -----------------------------
 # Placeholders are clearly marked; replace the URLs when the profiles exist.
 _AUTHOR_NAME = "Ahmed Shili"
-_AUTHOR_ROLE = "Builder of SQLTalk"
+_AUTHOR_ROLE = "Developer of SQLTalk"
 _CONTACT_LINKS = [
     ("🌐", "Portfolio", "https://ashili.pages.dev"),
     ("💻", "GitHub", "https://github.com/ahmshili"),
     ("❤️", "GitHub Sponsors", "https://github.com/sponsors/ahmshili"),
-    ("✉️", "Email", "mailto:ahmed.shili.921@gmail.com"),
-    ("💼", "LinkedIn", "https://www.linkedin.com/in/your-handle"),  # TODO(ahmed): replace with your LinkedIn profile URL
-    ("𝕏", "X / Twitter", "https://x.com/your-handle"),  # TODO(ahmed): replace with your X profile URL
+    ("✉️", "Email", "mailto:a.shili.pers@gmail.com"),
+    ("💼", "LinkedIn", "https://www.linkedin.com/in/ahmedshili"),
+    ("𝕏", "X / Twitter", "https://x.com/#"),
 ]
 
 

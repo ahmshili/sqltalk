@@ -10,6 +10,7 @@ from typing import List
 
 import streamlit as st
 
+from app.ui.privacy import sanitize_for_display
 from app.ui.theme import EXAMPLE_QUESTIONS, mascot_img
 
 logger = logging.getLogger("sqltalk")
@@ -94,13 +95,13 @@ def _render_transparency(sql_log: List[dict], duration: float | None, show: bool
             if entry["ok"]:
                 st.text(entry["result"])
             else:
-                # Raw database errors can name hosts, credentials sinks, or
-                # internal identifiers: normal mode gets a neutral message,
-                # dev mode keeps the raw text for debugging.
-                if dev_mode:
-                    st.error(entry["result"])
-                else:
-                    st.error("This query could not be completed. See Generated SQL for what was attempted.")
+                # Raw database errors can name hosts, roles, or internal
+                # identifiers: normal mode gets the scrubbed text (error kind
+                # preserved), dev mode keeps the raw text for debugging.
+                st.error(sanitize_for_display(
+                    entry["result"],
+                    _dev_mode_enabled(),
+                ))
 
     with tab_exec:
         total = len(sql_log)
@@ -198,6 +199,7 @@ def handle_chat_turn(agent_executor, prompt: str) -> None:
 
     sql_log: List[dict] = []
     error_detail: str | None = None
+    dev_mode = _dev_mode_enabled()
 
     def on_query(sql: str, result: str, ok: bool) -> None:
         sql_log.append({"sql": sql, "result": result, "ok": ok})
@@ -235,10 +237,13 @@ def handle_chat_turn(agent_executor, prompt: str) -> None:
                     error_detail = None
             duration = time.time() - start
 
-        st.markdown(output)
+        # Normal mode sees scrubbed text: provider/database error payloads
+        # can echo account names, roles, or connection strings. Dev mode
+        # (and session state) keeps the raw text for debugging.
+        st.markdown(sanitize_for_display(output, dev_mode))
         if error_detail:
             with st.expander("Error details (technical)"):
-                st.code(error_detail)
+                st.code(sanitize_for_display(error_detail, dev_mode))
         _render_transparency(sql_log, duration, st.session_state.get("show_sql_details", False))
 
     st.session_state.messages.append(

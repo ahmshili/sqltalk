@@ -199,6 +199,50 @@ CUSTOM_CSS = """
     display: flex;
     justify-content: space-between;
 }
+
+/* View navigation (top of the main area) — styled pills with big icons.
+   Scoped to the first radio inside the app view block container (the nav):
+   sidebar radios live under [data-testid="stSidebar"] and keep the default
+   Streamlit look. */
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] > div:first-child {
+    display: none; /* collapsed widget label renders as an empty pill */
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 0.35rem 0 0.75rem 0;
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(120, 120, 120, 0.30);
+    border-radius: 14px;
+    padding: 0.55rem 1.05rem;
+    margin: 0;
+    background: rgba(120, 120, 120, 0.08);
+    transition: border-color 120ms ease, background 120ms ease;
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+    border-color: rgba(34, 197, 94, 0.65);
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
+    display: none; /* hide the small default radio circle */
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"] p {
+    font-size: 1.02rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+[data-testid="stAppViewBlockContainer"] > div > div [data-testid="stRadio"] label[data-baseweb="radio"] p::first-letter {
+    font-size: 1.4rem; /* the emoji icon renders larger than the text */
+}
 </style>
 """
 

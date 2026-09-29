@@ -78,12 +78,15 @@ def check_query(sql: str) -> Optional[str]:
         return (
             "Blocked: "
             + " ".join(v.message for v in violations)
-            + " This console only runs read-only SELECT statements."
+            + " This demo is READ-ONLY: you cannot modify, insert, or "
+            "delete data — only SELECT / WITH / SHOW / EXPLAIN queries "
+            "are accepted."
         )
     if not _is_allowed_statement(sql):
         return (
-            "Only read-only queries are allowed here (SELECT / WITH / "
-            "SHOW / EXPLAIN)."
+            "Blocked: this demo is READ-ONLY — you cannot modify, insert, "
+            "or delete data. Only SELECT / WITH / SHOW / EXPLAIN queries "
+            "are accepted."
         )
     return None
 

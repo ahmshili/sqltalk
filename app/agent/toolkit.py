@@ -106,7 +106,8 @@ class GuardedQuerySQLDatabaseTool(QuerySQLDataBaseTool):
                 if self.on_query:
                     self.on_query(query, message, False)
                 return (
-                    f"Error: {message} Rewrite the query as a read-only "
+                    f"Error: {message} This demo is READ-ONLY: you cannot "
+                    "modify, insert, or delete data. Rewrite the query as a "
                     "SELECT statement."
                 )
 
